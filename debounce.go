@@ -16,18 +16,20 @@ import (
 // Option is a functional option for configuring the debouncer.
 type Option func(*debouncer)
 
+const NoLimit = -1
+
 // WithMaxCalls sets the maximum number of calls before the debounced function is executed.
-// To set no limit, use -1. By default, there is no limit.
+// By default, there is no limit.
 func WithMaxCalls(count int) Option {
 	return func(d *debouncer) {
-		d.callsLimit = count
+		d.maxCalls = count
 	}
 }
 
 // WithMaxWait sets the maximum wait time before the debounced function is executed.
 func WithMaxWait(limit time.Duration) Option {
 	return func(d *debouncer) {
-		d.waitLimit = limit
+		d.maxWait = limit
 	}
 }
 
@@ -38,15 +40,19 @@ func WithMaxWait(limit time.Duration) Option {
 // the last one will win.
 func New(after time.Duration, options ...Option) func(f func()) {
 	d := &debouncer{
-		after:      after,
-		startWait:  time.Now(),
-		waitLimit:  math.MaxInt64, // effectively no limit
-		callsLimit: -1,
+		after:     after,
+		startWait: time.Now(),
+		maxWait:   time.Duration(math.MaxInt64), // effectively no limit
+		maxCalls:  NoLimit,
 	}
 
-	// Creating timer and immediatly stop it, so there will be always allocated Timer
-	d.timer = time.AfterFunc(math.MaxInt64, func() {
-		d.f()
+	// Creating timer and immediately stop it, so there will be always allocated Timer
+	d.timer = time.AfterFunc(time.Duration(math.MaxInt64), func() {
+		// d.f should always be set at this time, but just to be safe we
+		// check for nil (in case timer somehow fires before any debounce calls)
+		if d.f != nil {
+			d.f()
+		}
 	})
 	d.timer.Stop()
 
@@ -73,22 +79,22 @@ type debouncer struct {
 	after time.Duration
 	timer *time.Timer
 
-	calls      int
-	callsLimit int
+	calls    int
+	maxCalls int
 
 	startWait time.Time
-	waitLimit time.Duration
+	maxWait   time.Duration
 
 	// Stores last function to debounce. Will be called after specified duration.
 	f func()
 }
 
 func (d *debouncer) callLimitReached() bool {
-	return d.callsLimit != -1 && d.calls >= d.callsLimit
+	return d.maxCalls != -1 && d.calls >= d.maxCalls
 }
 
 func (d *debouncer) timeLimitReached() bool {
-	return time.Since(d.startWait) >= d.waitLimit
+	return time.Since(d.startWait) >= d.maxWait
 }
 
 func (d *debouncer) add(f func()) {
@@ -111,7 +117,8 @@ func (d *debouncer) add(f func()) {
 	if d.callLimitReached() || d.timeLimitReached() {
 		d.timer.Stop()
 		d.calls = 0
-		d.f()
+		fn := d.f // Capture function
+		go fn()   // Execute outside mutex to avoid blocking
 	} else {
 		// Restarting timer, if limits were ok
 		d.timer.Reset(d.after)

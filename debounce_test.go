@@ -340,8 +340,8 @@ func TestZeroDuration(t *testing.T) {
 
 func TestCallLimitReachedFunction(t *testing.T) {
 	d := &debouncer{
-		callsLimit: 3,
-		calls:      3,
+		maxCalls: 3,
+		calls:    3,
 	}
 
 	if !d.callLimitReached() {
@@ -353,7 +353,7 @@ func TestCallLimitReachedFunction(t *testing.T) {
 		t.Error("Expected callLimitReached to return false when calls < callsLimit")
 	}
 
-	d.callsLimit = -1
+	d.maxCalls = -1
 	d.calls = 100
 	if d.callLimitReached() {
 		t.Error("Expected callLimitReached to return false when callsLimit is -1 (no limit)")
@@ -363,7 +363,7 @@ func TestCallLimitReachedFunction(t *testing.T) {
 func TestTimeLimitReachedFunction(t *testing.T) {
 	d := &debouncer{
 		startWait: time.Now().Add(-200 * time.Millisecond),
-		waitLimit: 100 * time.Millisecond,
+		maxWait:   100 * time.Millisecond,
 	}
 
 	if !d.timeLimitReached() {
