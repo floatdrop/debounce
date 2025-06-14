@@ -4,10 +4,7 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-// A simple, thread-safe debounce library for Go that delays function execution until
-// after a specified duration has elapsed since the last invocation.
-// Perfect for rate limiting, reducing redundant operations, and
-// optimizing performance in high-frequency scenarios.
+// Package debounce provides a debouncer func.
 package debounce
 
 import (
