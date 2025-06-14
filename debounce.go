@@ -81,17 +81,18 @@ func (d *debouncer) add(f func()) {
 	defer d.mu.Unlock()
 
 	if d.timer != nil {
-		d.calls += 1
 		d.timer.Stop()
 	} else {
-		d.calls = 1
+		d.calls = 0
+		d.startWait = time.Now()
 	}
+
+	d.calls += 1
 
 	// If the function has been called more than the limit, or if the wait time
 	// has exceeded the limit, execute the function immediately.
 	if d.callLimitReached() || d.timeLimitReached() {
-		d.calls = 0
-		d.startWait = time.Now()
+		d.timer = nil
 		f()
 	} else { // Otherwise, set a timer to call the function after the specified duration.
 		d.timer = time.AfterFunc(d.after, f)
