@@ -66,7 +66,7 @@ jobs:
     - name: Upload coverage artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-reports
+        name: coverage-reports-${{ matrix.runs-on }}
         path: |
           coverage.out
           coverage.txt
@@ -150,7 +150,7 @@ jobs:
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
+        name: coverage-report-${{ matrix.runs-on }}
         path: |
           coverage.out
           coverage.html
