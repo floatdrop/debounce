@@ -135,6 +135,12 @@ jobs:
           coverage.out
           coverage.html
 
+    - name: Update coverage badge
+      uses: ncruces/go-coverage-report@v0
+      with:
+        coverage-file: coverage.out
+        amend: true
+
     - name: Add coverage to PR comment
       if: github.event_name == 'pull_request'
       run: |
