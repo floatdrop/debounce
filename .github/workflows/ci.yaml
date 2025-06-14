@@ -136,9 +136,11 @@ jobs:
           coverage.html
 
     - name: Update coverage badge
-      uses: ncruces/go-coverage-report@v0
+      uses: ncruces/go-coverage-report@main
       with:
         coverage-file: coverage.out
+        report: true
+        chart: true
         amend: true
 
     - name: Add coverage to PR comment
