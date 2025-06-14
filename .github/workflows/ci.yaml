@@ -44,10 +44,12 @@ jobs:
       run: go vet ./...
 
     - name: Run go fmt
+      shell: bash
       run: |
-        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+        unformatted=$(gofmt -s -l .)
+        if [ -n "$unformatted" ]; then
           echo "The following files are not formatted:"
-          gofmt -s -l .
+          echo "$unformatted"
           exit 1
         fi
 
@@ -66,7 +68,7 @@ jobs:
     - name: Upload coverage artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-reports-${{ matrix.runs-on }}
+        name: coverage-reports-${{ matrix.os }}
         path: |
           coverage.out
           coverage.txt
@@ -150,7 +152,7 @@ jobs:
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report-${{ matrix.runs-on }}
+        name: coverage-report-${{ matrix.os }}
         path: |
           coverage.out
           coverage.html
