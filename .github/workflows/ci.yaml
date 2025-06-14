@@ -216,51 +216,6 @@ jobs:
       with:
         sarif_file: results.sarif
 
-  release-check:
-    name: Release Check
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, coverage, lint]
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.24'
-
-    - name: Check if version tag exists
-      id: check_tag
-      run: |
-        VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' README.md | head -n1 || echo "")
-        if [ -n "$VERSION" ]; then
-          if git rev-parse "$VERSION" >/dev/null 2>&1; then
-            echo "Tag $VERSION already exists"
-            echo "create_release=false" >> $GITHUB_OUTPUT
-          else
-            echo "Tag $VERSION does not exist, ready for release"
-            echo "create_release=true" >> $GITHUB_OUTPUT
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          fi
-        else
-          echo "No version found in README.md"
-          echo "create_release=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Build release artifacts
-      if: steps.check_tag.outputs.create_release == 'true'
-      run: |
-        mkdir -p dist
-        # Build for multiple platforms
-        GOOS=linux GOARCH=amd64 go build -o dist/debounce-linux-amd64 ./...
-        GOOS=linux GOARCH=arm64 go build -o dist/debounce-linux-arm64 ./...
-        GOOS=darwin GOARCH=amd64 go build -o dist/debounce-darwin-amd64 ./...
-        GOOS=darwin GOARCH=arm64 go build -o dist/debounce-darwin-arm64 ./...
-        GOOS=windows GOARCH=amd64 go build -o dist/debounce-windows-amd64.exe ./...
-
   notify:
     name: Notify
     runs-on: ubuntu-latest
