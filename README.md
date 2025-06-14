@@ -12,7 +12,7 @@ A simple, thread-safe debounce library for Go that delays function execution unt
 
 - **Zero allocations**: No allocations on sunbsequent debounce calls
 - **Thread-safe**: Safe for concurrent use across multiple goroutines
-- **Configurable delays and limits**: Set custom debounce duration, calls limit and overall wait limit
+- **Configurable delays and limits**: Set custom debounce duration, [WithMaxCalls](https://pkg.go.dev/github.com/floatdrop/debounce#WithMaxCalls) and [WithMaxWait](https://pkg.go.dev/github.com/floatdrop/debounce#WithMaxWait) options
 - **Zero dependencies**: Built using only Go standard library
 
 ## Installation
