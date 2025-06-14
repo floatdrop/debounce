@@ -24,3 +24,21 @@ func ExampleNew() {
 	time.Sleep(1 * time.Second)
 	// Output: This will be executed instead
 }
+
+func ExampleNewFunc() {
+	a := 0
+	// Create a debounced function with 500ms delay
+	debouncedFunc := debounce.NewFunc(func() {
+		a += 1
+		fmt.Println(a)
+	}, 500*time.Millisecond)
+
+	// This will only execute once, after 500ms
+	debouncedFunc()
+
+	debouncedFunc()
+
+	// Wait for execution
+	time.Sleep(1 * time.Second)
+	// Output: 1
+}
