@@ -1,6 +1,6 @@
 # Debounce
 
-[![CI](https://github.com/floatdrop/debounce/actions/workflows/ci.yml/badge.svg)](https://github.com/floatdrop/debounce/actions/workflows/ci.yml)
+[![CI](https://github.com/floatdrop/debounce/actions/workflows/ci.yaml/badge.svg)](https://github.com/floatdrop/debounce/actions/workflows/ci.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/floatdrop/debounce)](https://goreportcard.com/report/github.com/floatdrop/debounce)
 [![Go Reference](https://pkg.go.dev/badge/github.com/floatdrop/debounce.svg)](https://pkg.go.dev/github.com/floatdrop/debounce)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
