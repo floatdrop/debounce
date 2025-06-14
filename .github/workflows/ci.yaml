@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, develop ]
+    branches: [ master ]
 
 jobs:
   test:
@@ -135,6 +135,16 @@ jobs:
           coverage.out
           coverage.html
 
+    - name: Update coverage badge
+      uses: ncruces/go-coverage-report@main
+      with:
+        coverage-file: coverage.out
+        report: true
+        chart: true
+        amend: true
+      if: |
+        github.event_name == 'push'  
+      continue-on-error: true
     - name: Add coverage to PR comment
       if: github.event_name == 'pull_request'
       run: |

@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/floatdrop/debounce/actions/workflows/ci.yaml/badge.svg)](https://github.com/floatdrop/debounce/actions/workflows/ci.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/floatdrop/debounce)](https://goreportcard.com/report/github.com/floatdrop/debounce)
+[![Go Coverage](https://github.com/floatdrop/debounce/wiki/coverage.svg)](https://raw.githack.com/wiki/floatdrop/debounce/coverage.html)
 [![Go Reference](https://pkg.go.dev/badge/github.com/floatdrop/debounce.svg)](https://pkg.go.dev/github.com/floatdrop/debounce)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
