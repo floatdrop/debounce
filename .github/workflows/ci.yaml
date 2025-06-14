@@ -9,10 +9,11 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         go-version: ["1.24"]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     
     steps:
     - name: Checkout code
