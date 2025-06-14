@@ -28,18 +28,18 @@ go get github.com/floatdrop/debounce
 
 https://github.com/floatdrop/debounce/blob/770f96180424dabfea45ca421cce5aa8e57a46f5/example_test.go#L29-L43
 
-## Performance
+## Benchmarks
 
-The debounce implementation uses:
-- Mutex for thread safety
-- Timer for scheduling
-- Minimal memory allocation
-- No external dependencies
+```bash
+go test -bench=BenchmarkSingleCall
+```
 
-Benchmark results on typical hardware:
-- ~100ns per debounced call
+| Benchmark                        | Iterations | Time per Op  | Bytes per Op | Allocs per Op |
+|----------------------------------|------------|--------------|--------------|---------------|
+| BenchmarkSingleCall-14           | 47227514   | 25.24 ns/op  | 0 B/op       |  0 allocs/op  |
+
+- ~25ns per debounced call
 - Constant memory usage regardless of call frequency
-- Scales linearly with number of concurrent debouncers
 
 ## Contributing
 
