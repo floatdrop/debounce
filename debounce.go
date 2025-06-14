@@ -44,6 +44,12 @@ func New(after time.Duration, options ...Option) func(f func()) {
 		callsLimit: -1,
 	}
 
+	// Creating timer and immediatly stop it, so there will be always allocated Timer
+	d.timer = time.AfterFunc(math.MaxInt64, func() {
+		d.f()
+	})
+	d.timer.Stop()
+
 	for _, opt := range options {
 		opt(d)
 	}
@@ -63,6 +69,9 @@ type debouncer struct {
 
 	startWait time.Time
 	waitLimit time.Duration
+
+	// Stores last function to debounce. Will be called after specified duration.
+	f func()
 }
 
 func (d *debouncer) callLimitReached() bool {
@@ -77,21 +86,25 @@ func (d *debouncer) add(f func()) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	if d.timer != nil {
-		d.timer.Stop()
-	} else {
-		d.calls = 0
+	// Refreshing function reference, so d.timer will call right function
+	d.f = f
+
+	// If this is a first call, store startWait time
+	if d.calls == 0 {
 		d.startWait = time.Now()
 	}
 
+	// Counting calls
 	d.calls += 1
 
 	// If the function has been called more than the limit, or if the wait time
 	// has exceeded the limit, execute the function immediately.
 	if d.callLimitReached() || d.timeLimitReached() {
-		d.timer = nil
-		f()
-	} else { // Otherwise, set a timer to call the function after the specified duration.
-		d.timer = time.AfterFunc(d.after, f)
+		d.timer.Stop()
+		d.calls = 0
+		d.f()
+	} else {
+		// Restarting timer, if limits were ok
+		d.timer.Reset(d.after)
 	}
 }
