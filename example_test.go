@@ -42,3 +42,23 @@ func ExampleNewFunc() {
 	time.Sleep(1 * time.Second)
 	// Output: 1
 }
+
+func ExampleWithMaxCalls() {
+	debounced := debounce.New(500*time.Millisecond, debounce.WithMaxCalls(2))
+
+	debounced(func() {
+		fmt.Println("One")
+	})
+
+	debounced(func() {
+		fmt.Println("Two")
+	})
+
+	debounced(func() {
+		fmt.Println("Three")
+	})
+
+	time.Sleep(1 * time.Second)
+	// Output: Two
+	// Three
+}
