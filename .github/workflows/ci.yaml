@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, develop ]
+    branches: [ master ]
 
 jobs:
   test:
@@ -142,7 +142,9 @@ jobs:
         report: true
         chart: true
         amend: true
-
+      if: |
+        github.event_name == 'push'  
+      continue-on-error: true
     - name: Add coverage to PR comment
       if: github.event_name == 'pull_request'
       run: |
