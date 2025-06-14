@@ -59,6 +59,15 @@ func New(after time.Duration, options ...Option) func(f func()) {
 	}
 }
 
+// NewFunc return debounce function, that calls f every time.
+func NewFunc(f func(), after time.Duration, options ...Option) func() {
+	debounce := New(after, options...)
+
+	return func() {
+		debounce(f)
+	}
+}
+
 type debouncer struct {
 	mu    sync.Mutex
 	after time.Duration
