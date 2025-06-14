@@ -24,15 +24,9 @@ A simple, thread-safe debounce library for Go that delays function execution unt
 go get github.com/floatdrop/debounce
 ```
 
-## Use Cases
+## Usage
 
-- **Search inputs**: Debounce API calls while user types
-- **Button clicks**: Prevent double-clicks and rapid submissions
-- **File watchers**: Batch file system events
-- **Auto-save**: Delay saving until user stops typing
-- **Resize events**: Throttle expensive layout calculations
-- **API rate limiting**: Control request frequency
-- **Batch processing**: Collect operations before execution
+https://github.com/floatdrop/debounce/blob/770f96180424dabfea45ca421cce5aa8e57a46f5/example_test.go#L29-L43
 
 ## Performance
 
