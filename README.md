@@ -9,6 +9,7 @@ A simple, thread-safe debounce library for Go that delays function execution unt
 
 ## Features
 
+- **Zero allocations**: No allocations on sunbsequent debounce calls
 - **Thread-safe**: Safe for concurrent use across multiple goroutines
 - **Configurable delays**: Set custom debounce durations
 - **Call limits**: Execute immediately after a maximum number of calls
