@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.19, 1.20, 1.21, 1.22]
+        go-version: ["1.24"]
     
     steps:
     - name: Checkout code
@@ -54,7 +54,6 @@ jobs:
       run: go test -v -race -coverprofile=coverage.out ./...
 
     - name: Generate coverage report
-      if: matrix.go-version == '1.22'
       run: |
         go tool cover -func=coverage.out > coverage.txt
         go tool cover -html=coverage.out -o coverage.html
@@ -64,7 +63,6 @@ jobs:
         echo '```' >> $GITHUB_STEP_SUMMARY
 
     - name: Upload coverage artifacts
-      if: matrix.go-version == '1.22'
       uses: actions/upload-artifact@v4
       with:
         name: coverage-reports
@@ -83,7 +81,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22'
+        go-version: '1.24'
 
     - name: Cache Go modules
       uses: actions/cache@v3
@@ -91,9 +89,9 @@ jobs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ${{ runner.os }}-go-1.22-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-1.24-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-1.22-
+          ${{ runner.os }}-go-1.24-
 
     - name: Download dependencies
       run: go mod download
@@ -111,7 +109,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22'
+        go-version: '1.24'
 
     - name: Cache Go modules
       uses: actions/cache@v3
@@ -119,9 +117,9 @@ jobs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ${{ runner.os }}-go-1.22-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-1.24-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-1.22-
+          ${{ runner.os }}-go-1.24-
 
     - name: Download dependencies
       run: go mod download
@@ -185,7 +183,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22'
+        go-version: '1.24'
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
@@ -203,7 +201,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22'
+        go-version: '1.24'
 
     - name: Run Gosec Security Scanner
       uses: securego/gosec@master
@@ -229,7 +227,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22'
+        go-version: '1.24'
 
     - name: Check if version tag exists
       id: check_tag
