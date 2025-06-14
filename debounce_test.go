@@ -121,7 +121,7 @@ func TestWithMaxCallsNoLimit(t *testing.T) {
 	var called int
 	var mu sync.Mutex
 
-	debounced := New(50*time.Millisecond, WithMaxCalls(-1))
+	debounced := New(50*time.Millisecond, WithMaxCalls(NoLimitCalls))
 
 	fn := func() {
 		mu.Lock()
@@ -353,7 +353,7 @@ func TestCallLimitReachedFunction(t *testing.T) {
 		t.Error("Expected callLimitReached to return false when calls < callsLimit")
 	}
 
-	d.maxCalls = -1
+	d.maxCalls = NoLimitCalls
 	d.calls = 100
 	if d.callLimitReached() {
 		t.Error("Expected callLimitReached to return false when callsLimit is -1 (no limit)")
