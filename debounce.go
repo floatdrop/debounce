@@ -89,15 +89,12 @@ func (d *debouncer) add(f func()) {
 	// Refreshing function reference, so d.timer will call right function
 	d.f = f
 
-	// Restarting timer on call
-	d.timer.Reset(d.after)
-
 	// If this is a first call, store startWait time
 	if d.calls == 0 {
 		d.startWait = time.Now()
 	}
 
-	// Counting restarts
+	// Counting calls
 	d.calls += 1
 
 	// If the function has been called more than the limit, or if the wait time
@@ -106,5 +103,8 @@ func (d *debouncer) add(f func()) {
 		d.timer.Stop()
 		d.calls = 0
 		d.f()
+	} else {
+		// Restarting timer, if limits were ok
+		d.timer.Reset(d.after)
 	}
 }
