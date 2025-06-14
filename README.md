@@ -31,7 +31,7 @@ https://github.com/floatdrop/debounce/blob/770f96180424dabfea45ca421cce5aa8e57a4
 ## Benchmarks
 
 ```bash
-go test -bench=BenchmarkSingleCall
+go test -bench=BenchmarkSingleCall -benchmem
 ```
 
 | Benchmark                        | Iterations | Time per Op  | Bytes per Op | Allocs per Op |
