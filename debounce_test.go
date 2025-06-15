@@ -115,6 +115,14 @@ func TestWithMaxCalls(t *testing.T) {
 		t.Errorf("Expected 1 call, got %d", called)
 	}
 	mu.Unlock()
+
+	// Should not be called after it
+	time.Sleep(110 * time.Millisecond) // Small delay to allow execution
+	mu.Lock()
+	if called != 1 {
+		t.Errorf("Expected 1 call, got %d", called)
+	}
+	mu.Unlock()
 }
 
 func TestWithMaxCallsNoLimit(t *testing.T) {

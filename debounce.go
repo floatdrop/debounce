@@ -52,8 +52,13 @@ func New(after time.Duration, options ...Option) func(fn func()) {
 	// Creating timer and immediately stop it, so there will be always allocated Timer
 	d.timer = time.AfterFunc(NoLimitWait, func() {
 		d.mu.Lock()
+		if d.calls == 0 {
+			d.mu.Unlock()
+			return // MaxCalls or MaxWait reached, call can be dropped
+		}
 		d.calls = 0
 		d.mu.Unlock()
+
 		d.fn()
 	})
 	d.timer.Stop()
@@ -117,6 +122,7 @@ func (d *debouncer) debouncedCall(fn func()) {
 	// If the function has been called more than the limit, or if the wait time
 	// has exceeded the limit, execute the function immediately.
 	if d.callLimitReached() || d.timeLimitReached() {
+		d.timer.Stop() // Stop the timer to prevent it from firing later
 		d.calls = 0
 		fn := d.fn
 		go fn() // Execute outside mutex to avoid blocking
