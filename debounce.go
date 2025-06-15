@@ -53,10 +53,12 @@ func New(after time.Duration, options ...Option) func(fn func()) {
 	d.timer = time.AfterFunc(NoLimitWait, func() {
 		d.mu.Lock()
 		if d.calls == 0 {
+			d.mu.Unlock()
 			return // MaxCalls or MaxWait reached, call can be dropped
 		}
 		d.calls = 0
 		d.mu.Unlock()
+
 		d.fn()
 	})
 	d.timer.Stop()
