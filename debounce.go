@@ -30,6 +30,8 @@ func WithMaxCalls(count int) Option {
 }
 
 // WithMaxWait sets the maximum wait time before the debounced function is executed.
+// This check happens on the debounced function call, so total maximum wait time
+// will be (limit + after) if the function is called just before MaxWait limit.
 func WithMaxWait(limit time.Duration) Option {
 	return func(d *debouncer) {
 		d.maxWait = limit
