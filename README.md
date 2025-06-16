@@ -52,10 +52,10 @@ goos: darwin
 goarch: arm64
 pkg: github.com/floatdrop/debounce/v2
 cpu: Apple M3 Max
-BenchmarkDebounce_Insert-14    	 3318151	       341.9 ns/op	       0 B/op	       0 allocs/op
-BenchmarkDebounce_Do-14        	 4025568	       393.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDebounce_Insert-14    	 4860848	       234.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDebounce_Do-14        	 5188065	       230.8 ns/op	       0 B/op	       0 allocs/op
 PASS
-ok  	github.com/floatdrop/debounce/v2	8.574s
+ok  	github.com/floatdrop/debounce/v2	7.805s
 ```
 
 ## Contributing
