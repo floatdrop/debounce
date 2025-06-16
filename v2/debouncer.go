@@ -7,12 +7,12 @@ type Debouncer struct {
 
 // Creates new Debouncer instance that will call provided functions with debounce.
 func New(opts ...Option) *Debouncer {
-	inputCh := make(chan func(), 1)
+	inputCh := make(chan func())
 	debouncedCh := Chan(inputCh, opts...)
 
 	go func() {
 		for f := range debouncedCh {
-			f()
+			go f() // Do not block reading channel for f execution
 		}
 	}()
 

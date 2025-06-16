@@ -79,7 +79,7 @@ func TestDebounce_ChannelCloses(t *testing.T) {
 }
 
 func BenchmarkDebounce_Insert(b *testing.B) {
-	in := make(chan int, b.N) // This is hacky, because we buffer all incoming data
+	in := make(chan int)
 	_ = debounce.Chan(in, debounce.WithDelay(100*time.Millisecond))
 
 	b.ResetTimer()
