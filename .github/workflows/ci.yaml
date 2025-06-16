@@ -173,17 +173,6 @@ jobs:
           coverage.out
           coverage.html
 
-    - name: Update coverage badge
-      uses: ncruces/go-coverage-report@main
-      with:
-        output-dir: ${{matrix.module}}
-        coverage-file: ${{matrix.path}}/coverage.out
-        report: true
-        chart: true
-        amend: true
-      if: |
-        github.event_name == 'push'  
-      continue-on-error: true
     - name: Add coverage to PR comment
       if: github.event_name == 'pull_request'
       run: |

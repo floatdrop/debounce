@@ -3,7 +3,6 @@
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 [![CI](https://github.com/floatdrop/debounce/actions/workflows/ci.yaml/badge.svg)](https://github.com/floatdrop/debounce/actions/workflows/ci.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/floatdrop/debounce)](https://goreportcard.com/report/github.com/floatdrop/debounce)
-[![Go Coverage](https://github.com/floatdrop/debounce/wiki/v2/coverage.svg)](https://raw.githack.com/wiki/floatdrop/debounce/v2/coverage.html)
 [![Go Reference](https://pkg.go.dev/badge/github.com/floatdrop/debounce/v2.svg)](https://pkg.go.dev/github.com/floatdrop/debounce/v2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
