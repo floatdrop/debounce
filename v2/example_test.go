@@ -2,6 +2,7 @@ package debounce_test
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/floatdrop/debounce/v2"
@@ -12,7 +13,20 @@ func ExampleNew() {
 	debouncer.Do(func() { fmt.Println("Hello") })
 	debouncer.Do(func() { fmt.Println("World") })
 	time.Sleep(time.Second)
+	debouncer.Close()
 	// Output: World
+}
+
+func ExampleDebouncer_Func() {
+	var counter int32
+	debouncer := debounce.New(debounce.WithDelay(200 * time.Millisecond)).Func(func() {
+		atomic.AddInt32(&counter, 1)
+	})
+	debouncer()
+	debouncer()
+	time.Sleep(time.Second)
+	fmt.Println(counter)
+	// Output: 1
 }
 
 func ExampleChan() {

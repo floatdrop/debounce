@@ -70,7 +70,7 @@ func Chan[T any](in <-chan T, opts ...Option) <-chan T {
 					if hasVal {
 						out <- value
 					}
-					break
+					return
 				}
 
 				if options.limit != 0 { // If WithLimit specified as non-zero value start counting and emitting
