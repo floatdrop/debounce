@@ -177,7 +177,7 @@ jobs:
       uses: ncruces/go-coverage-report@main
       with:
         output-dir: ${{matrix.module}}
-        coverage-file: coverage.out
+        coverage-file: ${{matrix.path}}/coverage.out
         report: true
         chart: true
         amend: true
