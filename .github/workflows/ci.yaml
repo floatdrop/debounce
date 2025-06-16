@@ -106,7 +106,12 @@ jobs:
       run: go mod download
 
     - name: Run tests with coverage
-      run: go test -coverprofile=coverage.out ./...
+      run: |
+        go test -coverprofile=coverage.out.tmp ./...
+        pushd v2; go test -coverprofile=coverage.v2.out ./...; popd
+        echo "mode: set" > coverage.out
+        tail -n +2 coverage.out.tmp >> coverage.out
+        tail -n +2 v2/coverage-v2.out.tmp >> coverage.out
 
     - name: Calculate coverage
       run: |
