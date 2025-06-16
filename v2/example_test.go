@@ -25,7 +25,7 @@ func ExampleDebouncer_Func() {
 	debouncer()
 	debouncer()
 	time.Sleep(time.Second)
-	fmt.Println(counter)
+	fmt.Println(atomic.LoadInt32(&counter))
 	// Output: 1
 }
 

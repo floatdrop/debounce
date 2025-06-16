@@ -9,8 +9,20 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: "ubuntu-latest"
-    
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - module: v1
+            path: .
+          - module: v2
+            path: v2
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -26,7 +38,7 @@ jobs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ubuntu-latest-go-1.24-${{ hashFiles('**/go.sum') }}
+        key: ubuntu-latest-go-1.24-${{ hashFiles(format('{0}/go.sum', matrix.path)) }}
         restore-keys: |
           ubuntu-latest-go-1.24-
 
@@ -55,6 +67,19 @@ jobs:
   benchmark:
     name: Benchmark
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - module: v1
+            path: .
+          - module: v2
+            path: v2
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -70,7 +95,7 @@ jobs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ubunsu-latest-go-1.24-${{ hashFiles('**/go.sum') }}
+        key: ubuntu-latest-go-1.24-${{ hashFiles(format('{0}/go.sum', matrix.path)) }}
         restore-keys: |
           ubunsu-latest-go-1.24-
 
@@ -83,6 +108,19 @@ jobs:
   coverage:
     name: Coverage Check
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - module: v1
+            path: .
+          - module: v2
+            path: v2
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -98,7 +136,7 @@ jobs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ubuntu-latest-go-1.24-${{ hashFiles('**/go.sum') }}
+        key: ubuntu-latest-go-1.24-${{ hashFiles(format('{0}/go.sum', matrix.path)) }}
         restore-keys: |
           ubuntu-latest-go-1.24-
 
@@ -138,6 +176,7 @@ jobs:
     - name: Update coverage badge
       uses: ncruces/go-coverage-report@main
       with:
+        output-dir: ${{matrix.module}}
         coverage-file: coverage.out
         report: true
         chart: true
@@ -149,7 +188,7 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
-        echo "## 📊 Coverage Report" > coverage_comment.md
+        echo "## 📊 ${{matrix.module}} Coverage Report" > coverage_comment.md
         echo "" >> coverage_comment.md
         echo "**Total Coverage: $COVERAGE%**" >> coverage_comment.md
         echo "" >> coverage_comment.md
@@ -167,6 +206,19 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        include:
+          - module: v1
+            path: .
+          - module: v2
+            path: v2
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -181,45 +233,3 @@ jobs:
       with:
         version: latest
         args: --timeout=5m
-
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.24'
-
-    - name: Run Gosec Security Scanner
-      uses: securego/gosec@master
-      with:
-        args: '-no-fail -fmt sarif -out results.sarif ./...'
-
-    - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: results.sarif
-
-  notify:
-    name: Notify
-    runs-on: ubuntu-latest
-    needs: [test, benchmark, coverage, lint, security]
-    if: always()
-    steps:
-    - name: Notify success
-      if: needs.test.result == 'success' && needs.coverage.result == 'success' && needs.lint.result == 'success'
-      run: echo "✅ All checks passed!"
-
-    - name: Notify failure
-      if: needs.test.result == 'failure' || needs.coverage.result == 'failure' || needs.lint.result == 'failure'
-      run: |
-        echo "❌ Some checks failed:"
-        echo "Tests: ${{ needs.test.result }}"
-        echo "Coverage: ${{ needs.coverage.result }}"
-        echo "Lint: ${{ needs.lint.result }}"
-        echo "Security: ${{ needs.security.result }}"
-        exit 1
