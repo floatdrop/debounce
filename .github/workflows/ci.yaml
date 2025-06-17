@@ -179,7 +179,7 @@ jobs:
       if: matrix.module == 'v2'
       uses: tj-actions/coverage-badge-go@v2
       with:
-        filename: v2/coverage.out
+        value: $COVERAGE
 
     - name: Verify Changed files
       if: matrix.module == 'v2'
@@ -198,6 +198,7 @@ jobs:
         git push
 
     - name: Add coverage to PR comment
+      working-directory: ${{ matrix.path }}
       if: github.event_name == 'pull_request'
       run: |
         COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
