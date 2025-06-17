@@ -1,12 +1,11 @@
 package debounce_test
 
 import (
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/floatdrop/debounce/v2"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // helper to collect output with a timeout
@@ -42,8 +41,11 @@ func TestDebounce_LastValueOnly(t *testing.T) {
 		close(in)
 	}()
 
+	expected := []int{4}
 	result := collect(out, 1*time.Second)
-	assert.Equal(t, []int{4}, result)
+	if !slices.Equal(expected, result) {
+		t.Errorf("expected result = %v, got %v", expected, result)
+	}
 }
 
 func TestDebounce_MultipleValuesSpacedOut(t *testing.T) {
@@ -60,8 +62,11 @@ func TestDebounce_MultipleValuesSpacedOut(t *testing.T) {
 		close(in)
 	}()
 
+	expected := []int{1, 2, 3}
 	result := collect(out, 1*time.Second)
-	assert.Equal(t, []int{1, 2, 3}, result)
+	if !slices.Equal(expected, result) {
+		t.Errorf("expected result = %v, got %v", expected, result)
+	}
 }
 
 func TestDebounce_WithLimit(t *testing.T) {
@@ -80,8 +85,11 @@ func TestDebounce_WithLimit(t *testing.T) {
 		close(in)
 	}()
 
+	expected := []int{3, 4}
 	result := collect(out, 1*time.Second)
-	assert.Equal(t, []int{3, 4}, result)
+	if !slices.Equal(expected, result) {
+		t.Errorf("expected result = %v, got %v", expected, result)
+	}
 }
 
 func TestDebounce_ChannelCloses(t *testing.T) {
@@ -93,8 +101,11 @@ func TestDebounce_ChannelCloses(t *testing.T) {
 		close(in)
 	}()
 
+	expected := []int{42}
 	result := collect(out, 1*time.Second)
-	assert.Equal(t, []int{42}, result)
+	if !slices.Equal(expected, result) {
+		t.Errorf("expected result = %v, got %v", expected, result)
+	}
 }
 
 func TestDebounce_EmptyChannelCloses(t *testing.T) {
@@ -105,14 +116,19 @@ func TestDebounce_EmptyChannelCloses(t *testing.T) {
 		close(in)
 	}()
 
+	expected := []int(nil)
 	result := collect(out, 1*time.Second)
-	assert.Equal(t, []int(nil), result)
+	if !slices.Equal(expected, result) {
+		t.Errorf("expected result = %v, got %v", expected, result)
+	}
 }
 
 func TestDebounce_ZeroDelay(t *testing.T) {
 	in := make(chan int)
 	out := debounce.Chan(in)
-	assert.Equal(t, (<-chan int)(in), out)
+	if (<-chan int)(in) != out {
+		t.Errorf("expected result = %v, got %v", (<-chan int)(in), out)
+	}
 }
 
 func BenchmarkDebounce_Insert(b *testing.B) {
