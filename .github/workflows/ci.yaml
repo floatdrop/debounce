@@ -137,9 +137,11 @@ jobs:
           ubuntu-latest-go-1.24-
 
     - name: Download dependencies
+      working-directory: ${{ matrix.path }}
       run: go mod download
 
     - name: Run tests with coverage
+      working-directory: ${{ matrix.path }}
       run: go test -coverprofile=coverage.out ./...
 
     - name: Calculate coverage
