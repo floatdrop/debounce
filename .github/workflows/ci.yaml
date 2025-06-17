@@ -189,7 +189,6 @@ jobs:
         files: README.md
 
     - name: Commit and push changes
-      working-directory: ${{ matrix.path }}
       if: matrix.module == 'v2' && steps.verify-changed-files.outputs.files_changed == 'true'
       run: |
         git config --local user.email "action@github.com"
