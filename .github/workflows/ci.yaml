@@ -186,20 +186,14 @@ jobs:
       with:
         files: README.md
 
-    - name: Commit changes
+    - name: Commit and push changes
       if: matrix.module == 'v2' && steps.verify-changed-files.outputs.files_changed == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add README.md
         git commit -m "chore: Updated coverage badge."
-
-    - name: Push changes
-      if: matrix.module == 'v2' && steps.verify-changed-files.outputs.files_changed == 'true'
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ github.token }}
-        branch: ${{ github.head_ref }}
+        git push
 
     - name: Add coverage to PR comment
       if: github.event_name == 'pull_request'
