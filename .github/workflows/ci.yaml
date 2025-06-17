@@ -174,22 +174,24 @@ jobs:
           coverage.html
 
     - name: Go Coverage Badge  # Pass the `coverage.out` output to this action
+      if: matrix.module == 'v2'
       uses: tj-actions/coverage-badge-go@v2
       with:
-        filename: ${{matrix.path}}/coverage.out
+        filename: v2/coverage.out
 
     - name: Verify Changed files
+      if: matrix.module == 'v2'
       uses: tj-actions/verify-changed-files@v16
       id: verify-changed-files
       with:
-        files: README.md
+        files: ../README.md
 
     - name: Commit changes
       if: matrix.module == 'v2' && steps.verify-changed-files.outputs.files_changed == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add README.md
+        git add ../README.md
         git commit -m "chore: Updated coverage badge."
 
     - name: Push changes
