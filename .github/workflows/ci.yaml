@@ -117,10 +117,6 @@ jobs:
           - module: v2
             path: v2
 
-    defaults:
-      run:
-        working-directory: ${{ matrix.path }}
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -147,6 +143,7 @@ jobs:
       run: go test -coverprofile=coverage.out ./...
 
     - name: Calculate coverage
+      working-directory: ${{ matrix.path }}
       run: |
         COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
         echo "Coverage: $COVERAGE%"
@@ -163,6 +160,7 @@ jobs:
         fi
 
     - name: Generate coverage report
+      working-directory: ${{ matrix.path }}
       run: go tool cover -html=coverage.out -o coverage.html
 
     - name: Upload coverage report
@@ -170,8 +168,8 @@ jobs:
       with:
         name: coverage-report
         path: |
-          coverage.out
-          coverage.html
+          ${{ matrix.path }}/coverage.out
+          ${{ matrix.path }}/coverage.html
 
     - name: Go Coverage Badge  # Pass the `coverage.out` output to this action
       if: matrix.module == 'v2'
@@ -191,7 +189,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add ../README.md
+        git add README.md
         git commit -m "chore: Updated coverage badge."
 
     - name: Push changes
