@@ -81,11 +81,17 @@ func TestDebounce_WithLimit(t *testing.T) {
 		in <- 3
 		time.Sleep(50 * time.Millisecond)
 		in <- 4
+		time.Sleep(50 * time.Millisecond)
+		in <- 5
+		time.Sleep(50 * time.Millisecond)
+		in <- 6
+		time.Sleep(50 * time.Millisecond)
+		in <- 7
 		time.Sleep(300 * time.Millisecond) // wait longer than debounce delay
 		close(in)
 	}()
 
-	expected := []int{3, 4}
+	expected := []int{3, 6, 7}
 	result := collect(out, 1*time.Second)
 	if !slices.Equal(expected, result) {
 		t.Errorf("expected result = %v, got %v", expected, result)
