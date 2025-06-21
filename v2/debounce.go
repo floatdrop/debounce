@@ -56,19 +56,21 @@ func Chan[T any](in <-chan T, opts ...Option) <-chan T {
 		defer close(out)
 
 		var (
-			timer     *time.Timer // Timer to manage delay
-			lastValue T           // Last received value
-			hasValue  bool        // Whether a value is currently pending emission
-			count     int         // Number of delay resets since last emission
+			delayTimer *time.Timer // Timer to manage delay
+			lastValue  T           // Last received value
+			hasValue   bool        // Whether a value is currently pending emission
+			count      int         // Number of delay resets since last emission
 		)
 
-		// Function to return the timer channel or nil if timer is not set
-		// This avoids blocking on the timer channel if no timer is set
-		timerOrNil := func() <-chan time.Time {
-			if timer != nil {
-				return timer.C
+		emitLastValue := func() {
+			if hasValue {
+				out <- lastValue
+				hasValue = false
+				count = 0
+				if delayTimer != nil {
+					delayTimer.Stop()
+				}
 			}
-			return nil
 		}
 
 		for {
@@ -76,9 +78,7 @@ func Chan[T any](in <-chan T, opts ...Option) <-chan T {
 			case v, ok := <-in:
 				if !ok {
 					// Input channel closed — emit any pending value.
-					if hasValue {
-						out <- lastValue
-					}
+					emitLastValue()
 					return
 				}
 
@@ -90,30 +90,30 @@ func Chan[T any](in <-chan T, opts ...Option) <-chan T {
 
 				// Force emit if limit reached
 				if options.limit != 0 && count >= options.limit {
-					out <- v
-					hasValue = false
-					count = 0
-					if timer != nil {
-						timer.Stop()
-					}
+					emitLastValue()
 					continue
 				}
 
-				// Start or reset the delay timer
-				if timer == nil {
-					timer = time.NewTimer(options.delay)
-				} else {
-					timer.Reset(options.delay)
-				}
-			case <-timerOrNil():
-				// Delay has passed — emit the last value
-				if hasValue {
-					out <- lastValue
-					hasValue = false
-					count = 0
-				}
+				delayTimer = restartTimer(delayTimer, options.delay)
+			case <-timerChanOrNil(delayTimer):
+				emitLastValue()
 			}
 		}
 	}()
 	return out
+}
+
+func timerChanOrNil(timer *time.Timer) <-chan time.Time {
+	if timer != nil {
+		return timer.C
+	}
+	return nil
+}
+
+func restartTimer(timer *time.Timer, d time.Duration) *time.Timer {
+	if timer != nil {
+		timer.Reset(d)
+		return timer
+	}
+	return time.NewTimer(d)
 }
