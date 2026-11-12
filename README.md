@@ -1,6 +1,5 @@
 # Debounce
 
-[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 [![CI](https://github.com/floatdrop/debounce/actions/workflows/ci.yaml/badge.svg)](https://github.com/floatdrop/debounce/actions/workflows/ci.yaml)
 ![Coverage](https://img.shields.io/badge/Coverage-100.0-brightgreen)
 [![Go Reference](https://pkg.go.dev/badge/github.com/floatdrop/debounce/v3.svg)](https://pkg.go.dev/github.com/floatdrop/debounce/v3)
