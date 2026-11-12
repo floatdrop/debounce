@@ -8,51 +8,27 @@ on:
 
 jobs:
   test:
-    name: Test
+    name: Test (Go ${{ matrix.go }})
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        include:
-          - module: v1
-            path: .
-          - module: v2
-            path: v2
-
-    defaults:
-      run:
-        working-directory: ${{ matrix.path }}
+        go: [ '1.25', 'stable' ]
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v7
       with:
-        go-version: 1.24
-
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ubuntu-latest-go-1.24-${{ hashFiles(format('{0}/go.sum', matrix.path)) }}
-        restore-keys: |
-          ubuntu-latest-go-1.24-
-
-    - name: Download dependencies
-      run: go mod download
-
-    - name: Verify dependencies
-      run: go mod verify
+        go-version: ${{ matrix.go }}
+        cache: false
 
     - name: Run go vet
       run: go vet ./...
 
     - name: Run go fmt
-      shell: bash
       run: |
         unformatted=$(gofmt -s -l .)
         if [ -n "$unformatted" ]; then
@@ -68,39 +44,15 @@ jobs:
     name: Benchmark
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        include:
-          - module: v1
-            path: .
-          - module: v2
-            path: v2
-
-    defaults:
-      run:
-        working-directory: ${{ matrix.path }}
-
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v7
       with:
-        go-version: '1.24'
-
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ubuntu-latest-go-1.24-${{ hashFiles(format('{0}/go.sum', matrix.path)) }}
-        restore-keys: |
-          ubunsu-latest-go-1.24-
-
-    - name: Download dependencies
-      run: go mod download
+        go-version: stable
+        cache: false
 
     - name: Run benchmarks
       run: go test -bench=. -benchmem -run=^$ ./...
@@ -109,45 +61,22 @@ jobs:
     name: Coverage Check
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        include:
-          - module: v1
-            path: .
-          - module: v2
-            path: v2
-
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         ref: ${{ github.head_ref }}
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v7
       with:
-        go-version: '1.24'
-
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ubuntu-latest-go-1.24-${{ hashFiles(format('{0}/go.sum', matrix.path)) }}
-        restore-keys: |
-          ubuntu-latest-go-1.24-
-
-    - name: Download dependencies
-      working-directory: ${{ matrix.path }}
-      run: go mod download
+        go-version: stable
+        cache: false
 
     - name: Run tests with coverage
-      working-directory: ${{ matrix.path }}
       run: go test -coverprofile=coverage.out ./...
 
     - name: Calculate coverage
-      working-directory: ${{ matrix.path }}
       run: |
         COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
         echo "Coverage: $COVERAGE%"
@@ -164,32 +93,29 @@ jobs:
         fi
 
     - name: Generate coverage report
-      working-directory: ${{ matrix.path }}
       run: go tool cover -html=coverage.out -o coverage.html
 
     - name: Upload coverage report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
-        name: coverage-report-${{ matrix.module }}
+        name: coverage-report
         path: |
-          ${{ matrix.path }}/coverage.out
-          ${{ matrix.path }}/coverage.html
+          coverage.out
+          coverage.html
 
     - name: Go Coverage Badge  # Pass the `coverage.out` output to this action
-      if: matrix.module == 'v2'
       uses: tj-actions/coverage-badge-go@v2
       with:
         value: $COVERAGE
 
     - name: Verify Changed files
-      if: matrix.module == 'v2'
-      uses: tj-actions/verify-changed-files@v16
+      uses: tj-actions/verify-changed-files@v20
       id: verify-changed-files
       with:
         files: README.md
 
     - name: Commit and push changes
-      if: matrix.module == 'v2' && steps.verify-changed-files.outputs.files_changed == 'true'
+      if: steps.verify-changed-files.outputs.files_changed == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -198,11 +124,10 @@ jobs:
         git push
 
     - name: Add coverage to PR comment
-      working-directory: ${{ matrix.path }}
       if: github.event_name == 'pull_request'
       run: |
         COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
-        echo "## 📊 ${{matrix.module}} Coverage Report" > coverage_comment.md
+        echo "## 📊 Coverage Report" > coverage_comment.md
         echo "" >> coverage_comment.md
         echo "**Total Coverage: $COVERAGE%**" >> coverage_comment.md
         echo "" >> coverage_comment.md
@@ -210,7 +135,7 @@ jobs:
         echo '```' >> coverage_comment.md
         go tool cover -func=coverage.out >> coverage_comment.md
         echo '```' >> coverage_comment.md
-        
+
         # Create or update PR comment
         gh pr comment ${{ github.event.number }} --body-file coverage_comment.md || \
         gh pr comment ${{ github.event.number }} --body "$(cat coverage_comment.md)"
@@ -220,30 +145,19 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        include:
-          - module: v1
-            path: .
-          - module: v2
-            path: v2
 
-    defaults:
-      run:
-        working-directory: ${{ matrix.path }}
-    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v7
       with:
-        go-version: '1.24'
+        go-version: stable
+        cache: false
 
     - name: golangci-lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v9
       with:
         version: latest
         args: --timeout=5m

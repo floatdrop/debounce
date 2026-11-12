@@ -4,61 +4,82 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/floatdrop/debounce"
+	"github.com/floatdrop/debounce/v3"
 )
 
-func ExampleNew() {
-	// Create a debounced function with 500ms delay
-	debounced := debounce.New(500 * time.Millisecond)
+func Example() {
+	d := debounce.New(
+		debounce.WithTrailing(100*time.Millisecond),
+		debounce.WithTimeLimit(time.Second),
+	)
+	defer d.Stop()
 
-	// This will only execute once, after 500ms
-	debounced(func() {
-		fmt.Println("Hello, World!")
-	})
+	for _, query := range []string{"g", "go", "gol", "gola", "golan", "golang"} {
+		d.Do(func() { fmt.Println("search:", query) })
+	}
 
-	debounced(func() {
-		fmt.Println("This will be executed instead")
-	})
-
-	// Wait for execution
-	time.Sleep(1 * time.Second)
-	// Output: This will be executed instead
+	time.Sleep(300 * time.Millisecond)
+	// Output: search: golang
 }
 
 func ExampleNewFunc() {
-	a := 0
-	// Create a debounced function with 500ms delay
-	debouncedFunc := debounce.NewFunc(func() {
-		a += 1
-		fmt.Println(a)
-	}, 500*time.Millisecond)
+	saves := 0
+	save, stop := debounce.NewFunc(func() {
+		saves++
+		fmt.Println("saved", saves)
+	}, debounce.WithTrailing(100*time.Millisecond))
+	defer stop()
 
-	// This will only execute once, after 500ms
-	debouncedFunc()
+	save()
+	save()
+	save()
 
-	debouncedFunc()
-
-	// Wait for execution
-	time.Sleep(1 * time.Second)
-	// Output: 1
+	time.Sleep(300 * time.Millisecond)
+	// Output: saved 1
 }
 
-func ExampleWithMaxCalls() {
-	debounced := debounce.New(500*time.Millisecond, debounce.WithMaxCalls(2))
+func ExampleWithLeading() {
+	d := debounce.New(
+		debounce.WithLeading(true),
+		debounce.WithTrailing(100*time.Millisecond),
+	)
 
-	debounced(func() {
-		fmt.Println("One")
+	d.Do(func() { fmt.Println("first") }) // runs immediately
+	d.Do(func() { fmt.Println("second") })
+	d.Do(func() { fmt.Println("third") }) // runs 100ms later
+
+	time.Sleep(300 * time.Millisecond)
+	// Output:
+	// first
+	// third
+}
+
+func ExampleWithDebounceLimit() {
+	d := debounce.New(
+		debounce.WithTrailing(100*time.Millisecond),
+		debounce.WithDebounceLimit(2),
+	)
+
+	d.Do(func() { fmt.Println("one") })
+	d.Do(func() { fmt.Println("two") })   // the 2nd call runs immediately
+	d.Do(func() { fmt.Println("three") }) // runs 100ms later
+
+	time.Sleep(300 * time.Millisecond)
+	// Output:
+	// two
+	// three
+}
+
+func ExampleDebouncer_DoAsync() {
+	done := make(chan struct{})
+	d := debounce.New(debounce.WithLeading(true))
+
+	// With WithLeading, Do would run this in the calling goroutine.
+	d.DoAsync(func() {
+		fmt.Println("hello from another goroutine")
+		close(done)
 	})
 
-	debounced(func() {
-		fmt.Println("Two")
-	})
-
-	debounced(func() {
-		fmt.Println("Three")
-	})
-
-	time.Sleep(1 * time.Second)
-	// Output: Two
-	// Three
+	<-done
+	// Output: hello from another goroutine
 }

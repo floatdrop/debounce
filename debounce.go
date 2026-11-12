@@ -1,135 +1,70 @@
-// Copyright © 2019 Bjørn Erik Pedersen <bjorn.erik.pedersen@gmail.com>.
-// Copyright © 2025 Vsevolod Strukchinsky <floatdrop@gmail.com>.
+// Package debounce coalesces bursts of function calls into fewer executions.
 //
-// Use of this source code is governed by an MIT-style
-// license that can be found in the LICENSE file.
-
-// Package debounce provides a debouncer func.
+// A [Debouncer] receives functions through [Debouncer.Do] and decides, based on
+// its options, which of them actually run:
+//
+//   - [WithTrailing] runs the most recent function once calls have stopped for
+//     a given duration. This is the classic debounce.
+//   - [WithLeading] runs the first call of a burst immediately.
+//   - [WithDebounceLimit] runs every n-th call, so steady traffic still makes
+//     progress.
+//   - [WithTimeLimit] runs a call immediately once the oldest pending call has
+//     waited for a given duration.
+//
+// Options can be combined. A typical setup debounces with a short trailing
+// delay and caps the total delay with a time limit:
+//
+//	d := debounce.New(
+//		debounce.WithTrailing(100*time.Millisecond),
+//		debounce.WithTimeLimit(time.Second),
+//	)
+//	d.Do(save) // save runs after 100ms without calls, or after about a second of continuous calls
+//
+// # Bursts
+//
+// Calls are grouped into bursts. A burst starts with the first call to Do and,
+// if WithTrailing(after) is set, ends once after has passed without further
+// calls. Without WithTrailing a burst only ends when [Debouncer.Stop] is called.
+//
+// Between executions Do only records the function it was given. Only the most
+// recent one runs; earlier ones are dropped. Every execution, whether leading,
+// limit-triggered or trailing, clears the pending function and resets the
+// limit counters.
+//
+// # Where functions run
+//
+// Leading and limit-triggered executions run synchronously in the goroutine
+// that called Do. Trailing executions run in their own goroutine. A function
+// may therefore start while a previous one is still running. Use
+// [Debouncer.DoAsync] to run every execution in its own goroutine.
 package debounce
 
-import (
-	"math"
-	"sync"
-	"time"
-)
+import "time"
 
-// Option is a functional option for configuring the debouncer.
-type Option func(*debouncer)
-
-const (
-	NoLimitCalls = math.MaxInt
-	NoLimitWait  = time.Duration(math.MaxInt64)
-)
-
-// WithMaxCalls sets the maximum number of calls before the debounced function is executed.
-// By default, there is no limit.
-func WithMaxCalls(count int) Option {
-	return func(d *debouncer) {
-		d.maxCalls = count
-	}
-}
-
-// WithMaxWait sets the maximum wait time before the debounced function is executed.
-// This check happens on the debounced function call, so total maximum wait time
-// will be (limit + after) if the function is called just before MaxWait limit.
-func WithMaxWait(limit time.Duration) Option {
-	return func(d *debouncer) {
-		d.maxWait = limit
-	}
-}
-
-// Returns a debounced function. The provided function will be executed
-// after a period of inactivity, or when a maximum number of calls or
-// time threshold is reached, if configured.
-// The debounced function can be invoked with different functions, if needed,
-// the last one will win.
-func New(after time.Duration, options ...Option) func(fn func()) {
-	d := &debouncer{
-		after:     after,
-		startWait: time.Now(),
-		maxWait:   NoLimitWait,
-		maxCalls:  NoLimitCalls,
-	}
-
-	// Creating timer and immediately stop it, so there will be always allocated Timer
-	d.timer = time.AfterFunc(NoLimitWait, func() {
-		d.mu.Lock()
-		if d.calls == 0 {
-			d.mu.Unlock()
-			return // MaxCalls or MaxWait reached, call can be dropped
-		}
-		d.calls = 0
-		d.mu.Unlock()
-
-		d.fn()
-	})
-	d.timer.Stop()
-
+// New returns a Debouncer configured with the given options.
+//
+// Configure at least [WithTrailing] or [WithLeading]: without either, calls
+// only run when a limit is reached, and with no options at all they never run.
+func New(options ...Option) *Debouncer {
+	d := &Debouncer{epoch: time.Now()}
 	for _, opt := range options {
-		opt(d)
+		opt(&d.cfg)
 	}
-
-	return func(fn func()) {
-		d.debouncedCall(fn)
-	}
+	return d
 }
 
-// NewFunc returns a debounced function that always debounces the provided function.
-func NewFunc(fn func(), after time.Duration, options ...Option) func() {
-	debounce := New(after, options...)
-
-	return func() {
-		debounce(fn)
-	}
-}
-
-type debouncer struct {
-	mu    sync.Mutex
-	after time.Duration
-	timer *time.Timer
-
-	calls    int
-	maxCalls int
-
-	startWait time.Time
-	maxWait   time.Duration
-
-	// Stores last function to debounce. Will be called after specified duration.
-	fn func()
-}
-
-func (d *debouncer) callLimitReached() bool {
-	return d.maxCalls != NoLimitCalls && d.calls >= d.maxCalls
-}
-
-func (d *debouncer) timeLimitReached() bool {
-	return d.maxWait != NoLimitWait && time.Since(d.startWait) >= d.maxWait
-}
-
-func (d *debouncer) debouncedCall(fn func()) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	// Refreshing function reference, so d.timer will call right function
-	d.fn = fn
-
-	// If this is a first call, store startWait time
-	if d.calls == 0 {
-		d.startWait = time.Now()
-	}
-
-	// Counting calls
-	d.calls++
-
-	// If the function has been called more than the limit, or if the wait time
-	// has exceeded the limit, execute the function immediately.
-	if d.callLimitReached() || d.timeLimitReached() {
-		d.timer.Stop() // Stop the timer to prevent it from firing later
-		d.calls = 0
-		fn := d.fn
-		go fn() // Execute outside mutex to avoid blocking
-	} else {
-		// Restarting timer, if limits were ok
-		d.timer.Reset(d.after)
-	}
+// NewFunc returns a debounced version of fn and a function that cancels any
+// pending execution of it.
+//
+// It is a shorthand for creating a Debouncer with [New] and always passing fn
+// to [Debouncer.Do]:
+//
+//	save, cancel := debounce.NewFunc(saveDocument, debounce.WithTrailing(time.Second))
+//	defer cancel()
+//
+//	save() // queued
+//	save() // queued again; saveDocument runs once, a second after this call
+func NewFunc(fn func(), options ...Option) (debounced func(), stop func()) {
+	d := New(options...)
+	return func() { d.Do(fn) }, d.Stop
 }
